@@ -4,6 +4,10 @@ namespace Aybarsm\Extra\Support\Concerns;
 
 trait HasEnumHelpers
 {
+    public static function isBackedEnum(): bool
+    {
+        return (!is_a(static::class, \BackedEnum::class));
+    }
     public static function getAllNames(): array
     {
         return array_column(static::cases(), 'name');
@@ -11,41 +15,57 @@ trait HasEnumHelpers
 
     public static function getAllValues(): array
     {
+        if (!static::isBackedEnum()) {
+            throw new \BadMethodCallException('Value extraction requires a BackedEnum');
+        }
         return array_column(static::cases(), 'value');
     }
 
     public static function toArray(): array
     {
-        return array_combine(static::getAllValues(), static::getAllNames());
+        $names = static::getAllNames();
+        $values = static::isBackedEnum() ? static::getAllValues() : $names;
+        return array_combine($names, $values);
     }
 
-    public static function toAssocArray(): array
+    public static function find(mixed $search, bool $strict = true): ?\UnitEnum
     {
-        return array_combine(static::getAllNames(), static::getAllValues());
+        return array_find(
+            static::cases(),
+            static fn (\UnitEnum $item) => value_compare($item->name, $search, $strict) || ($item::isisBackedEnum() && value_compare($item->value, $search, $strict)),
+        );
     }
 
-    // public static function byName(mixed $name): int|string|null
-    // {
-    //     return collect(static::cases())->firstWhere('name', $name)?->value;
-    // }
+     public static function findByName(mixed $name, bool $strict = true): int|string|null
+     {
+         return array_find(
+             static::cases(),
+             static fn (\UnitEnum $item) => value_compare($item->name, $name, $strict)
+         );
+     }
 
-    // public static function byValue(mixed $value): int|string|null
-    // {
-    //     return collect(static::cases())->firstWhere('value', $value)?->name;
-    // }
+     public static function findByValue(mixed $value, bool $strict = true): int|string|null
+     {
+         if (!static::isBackedEnum()) {
+             throw new \BadMethodCallException('Find by value requires a BackedEnum');
+         }
+         return array_find(
+             static::cases(),
+             static fn (\BackedEnum $item) => value_compare($item->value, $value, $strict)
+         );
+     }
 
-    // public static function getFirst(mixed $search): ?static
-    // {
-    //     return collect(static::cases())->filter(fn ($item) => $item->value === $search || $item->name === $search)->first();
-    // }
+     public static function make(mixed $value, bool $strict = true, bool $throws = false): ?static
+     {
+        if (is_a($value, static::class)) return $value;
+        $ret = static::findByName($value, $strict) ?? (static::isBackedEnum() ? static::findByValue($value) : null);
 
-    // public static function getFirstName(mixed $search): int|string|null
-    // {
-    //     return static::getFirst($search)->name;
-    // }
+        if ($throws && $ret === null) {
+            throw new \InvalidArgumentException(
+                sprintf('Could not find matching`%s` by `%s`', static::class, (string) $value)
+            );
+        }
 
-    // public static function getFirstValue(mixed $search): int|string|null
-    // {
-    //     return static::getFirst($search)->value;
-    // }
+        return $ret;
+     }
 }

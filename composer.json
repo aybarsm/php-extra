@@ -1,39 +1,42 @@
 {
-  "name": "aybarsm/php-extra",
-  "description": "An opinionated PHP extra utilities library.",
-  "version": "dev-main",
-  "type": "library",
-  "license": "proprietary",
-  "keywords": ["aybarsm", "php", "utilities", "utils"],
-  "homepage": "https://github.com/aybarsm/php-extra",
-  "authors": [
-      {
-          "name": "Murat Aybars",
-          "email": "murat.aybars@blrm.net",
-          "homepage": "https://www.blrm.net",
-          "role": "Founder"
-      }
-  ],
-  "require": {
-    "php": "^8.4"
-  },
-  "require-dev": {
-      "pestphp/pest": "^4.4"
-  },
-  "autoload": {
-    "psr-4": {
-      "Aybarsm\\Extra\\": "src/"
-    }
-  },
-  "autoload-dev": {
-      "psr-4": {
-          "Tests\\": "tests/"
-      }
-  },
-  "config": {
-    "sort-packages": true,
-    "optimize-autoloader": true
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "name": "aybarsm/php-extra",
+    "description": "An opinionated PHP extra utilities library.",
+    "version": "dev-main",
+    "type": "library",
+    "license": "proprietary",
+    "keywords": ["aybarsm", "php", "utilities", "utils"],
+    "homepage": "https://github.com/aybarsm/php-extra",
+    "authors": [
+        {
+            "name": "Murat Aybars",
+            "email": "murat.aybars@blrm.net",
+            "homepage": "https://www.blrm.net",
+            "role": "Founder"
+        }
+    ],
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "pestphp/pest": "^4.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Aybarsm\\Extra\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
