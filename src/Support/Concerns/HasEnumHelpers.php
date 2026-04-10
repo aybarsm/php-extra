@@ -15,9 +15,11 @@ trait HasEnumHelpers
 
     public static function getAllValues(): array
     {
-        if (!static::isBackedEnum()) {
-            throw new \BadMethodCallException('Value extraction requires a BackedEnum');
-        }
+        throw_if(
+            !static::isBackedEnum(),
+            \BadMethodCallException::class,
+            'Value extraction requires a BackedEnum'
+        );
         return array_column(static::cases(), 'value');
     }
 
@@ -36,7 +38,7 @@ trait HasEnumHelpers
         );
     }
 
-     public static function findByName(mixed $name, bool $strict = true): int|string|null
+     public static function findByName(mixed $name, bool $strict = true): ?static
      {
          return array_find(
              static::cases(),
@@ -44,28 +46,31 @@ trait HasEnumHelpers
          );
      }
 
-     public static function findByValue(mixed $value, bool $strict = true): int|string|null
+     public static function findByValue(mixed $value, bool $strict = true): ?static
      {
-         if (!static::isBackedEnum()) {
-             throw new \BadMethodCallException('Find by value requires a BackedEnum');
-         }
+         throw_if(
+             !static::isBackedEnum(),
+             \BadMethodCallException::class,
+             'Find by value requires a BackedEnum'
+         );
          return array_find(
              static::cases(),
              static fn (\BackedEnum $item) => value_compare($item->value, $value, $strict)
          );
      }
 
-     public static function make(mixed $value, bool $strict = true, bool $throws = false): ?static
+     public static function make(mixed $value, bool $strict = true): ?static
      {
         if (is_a($value, static::class)) return $value;
-        $ret = static::findByName($value, $strict) ?? (static::isBackedEnum() ? static::findByValue($value) : null);
 
-        if ($throws && $ret === null) {
-            throw new \InvalidArgumentException(
-                sprintf('Could not find matching`%s` by `%s`', static::class, (string) $value)
-            );
-        }
-
-        return $ret;
+        return static::findByName($value, $strict) ?? (static::isBackedEnum() ? static::findByValue($value, $strict) : null);
      }
+
+    public static function makeAll(bool $strict = true, bool $unique = false, ...$values): array
+    {
+        if (count($values) === 0) return [];
+
+        $ret = array_map(static fn ($value) => static::make($value, $strict), $values);
+        return $unique ? array_unique_by($ret, static fn (\UnitEnum $item) => $item->name) : $ret;
+    }
 }
