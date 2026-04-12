@@ -59,18 +59,26 @@ trait HasEnumHelpers
          );
      }
 
-     public static function make(mixed $value, bool $strict = true): ?static
+     public static function make(mixed $value, bool $strict = true, bool $throws = true): ?static
      {
         if (is_a($value, static::class)) return $value;
 
-        return static::findByName($value, $strict) ?? (static::isBackedEnum() ? static::findByValue($value, $strict) : null);
+        $ret = static::findByName($value, $strict) ?? (static::isBackedEnum() ? static::findByValue($value, $strict) : null);
+
+        throw_if(
+            $throws && $ret === null,
+            \InvalidArgumentException::class,
+            sprintf('Could not make `%s` with value `%s`', static::class, $value)
+        );
+
+        return $ret;
      }
 
-    public static function makeAll(bool $strict = true, bool $unique = false, ...$values): array
+    public static function makeAll(bool $strict = true, bool $throws = true, bool $unique = false, ...$values): array
     {
         if (count($values) === 0) return [];
 
-        $ret = array_map(static fn ($value) => static::make($value, $strict), $values);
+        $ret = array_map(static fn ($value) => static::make($value, $strict, $throws), $values);
         return $unique ? array_unique_by($ret, static fn (\UnitEnum $item) => $item->name) : $ret;
     }
 }
