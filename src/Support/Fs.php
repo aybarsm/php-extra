@@ -8,48 +8,51 @@ final class Fs
 {
     public static function pathSegments(string|array|null|\Stringable ...$paths): array
     {
+        if (namespace\Data::blank($paths)) {
+            return namespace\Arr::whereFilled(namespace\Str::segments(getcwd(), DIRECTORY_SEPARATOR));
+        }
+
         $segments = [];
+
         foreach(namespace\Arr::flatten($paths) as $path) {
             if (namespace\Data::blank($path)) continue;
-            array_push($segments, namespace\Str::segments($path, DIRECTORY_SEPARATOR));
+            $inner = namespace\Str::segments((string) $path, DIRECTORY_SEPARATOR);
+            if (namespace\Data::blank($inner)) continue;
+            if (namespace\Data::blank($segments)) {
+                $segmentStarts = null;
+                if ($inner[0] === '.') {
+                    unset($inner[0]);
+                    $segmentStarts = getcwd();
+                }elseif ($inner[0] === '~'){
+                    unset($inner[0]);
+                    $segmentStarts = $_SERVER['HOME'];
+                }
+                if (!is_null($segmentStarts)) {
+                    $segments = namespace\Arr::whereFilled(namespace\Str::segments($segmentStarts, DIRECTORY_SEPARATOR));
+                }
+            }
+            array_push($segments, ...$inner);
         }
+
         return $segments;
-//        $paths = namespace\Arr::wrap($paths);
-//        $paths = namespace\Arr::flatten($paths);
-//
-//        if (count($paths) === 0) {
-//            return [getcwd()];
-//        }
-//
-//        $segments = array_map(
-//            static fn ($path) => namespace\Str::segments((string) $path, DIRECTORY_SEPARATOR),
-//            ...$paths
-//        );
-//        $segments = namespace\Arr::flatten(
-//            array_map(
-//                static fn ($path) => $path,
-//                $oaths
-//            )
-//        );
-//        foreach($paths as $idx => $path) {
-//            $path = str($path);
-//
-//            if ($idx === 0){
-//                $path = $path->ltrim('\'"');
-//                if ($path->ltrim()->startsWith('.')){
-//                    $path = $path->ltrim()->chopStart('.')->prepend(getcwd() . DIRECTORY_SEPARATOR);
-//                }elseif ($path->ltrim()->startsWith('~')){
-//                    $path = $path->ltrim()->chopStart('~')->prepend($_SERVER['HOME'] . DIRECTORY_SEPARATOR);
-//                }
-//            }
-//
-//            if ($idx === array_key_last($paths)){
-//                $path = $path->rtrim('\'"');
-//            }
-//
-//            $segments = $segments->concat($path->split($pattern, -1, PREG_SPLIT_NO_EMPTY)->toArray());
-//        }
-//
-//        return $segments;
+    }
+
+    public static function path(string|array|null|\Stringable ...$paths): string
+    {
+        $paths = self::pathSegments(...$paths);
+        $dirSep = DIRECTORY_SEPARATOR;
+
+        if (namespace\Os::family()->isUnix()){
+            return namespace\Str::start(implode($dirSep, $paths), $dirSep);
+        }
+
+        if (namespace\Os::family()->isWindows()){
+            $patternDrive = '/^[A-Z]\:/';
+            if (namespace\Str::isMatch($paths[0], $patternDrive)){
+                $paths[0] = namespace\Str::finish($paths[0], $dirSep);
+            }
+        }
+
+        return implode($dirSep, $paths);
     }
 }

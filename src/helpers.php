@@ -66,9 +66,7 @@ if (! function_exists('throw_if')) {
 if (!function_exists('value_compare')){
     function value_compare(mixed $source, mixed $compare, bool $strict = true): bool
     {
-        if ($strict) return $source === $compare;
-
-        return strtolower((string) $source) === strtolower((string) $compare);
+        return Support\Data::compare($source, $compare, $strict);
     }
 }
 
@@ -134,67 +132,24 @@ if (! function_exists('str_segments')) {
     }
 }
 
-if (! function_exists('data_key_segments')) {
-    function data_key_segments(string|int|null $key): array
-    {
-        return str_segments($key, '.');
-    }
-}
-
 if (! function_exists('data_key')) {
     function data_key(
-        string|int $key,
-        null|string|int $prefix = null,
-        null|string|int $suffix = null,
+        string|int|null|iterable|\Stringable $key,
+        string|int|null|iterable|\Stringable $prefix = null,
+        string|int|null|iterable|\Stringable $suffix = null,
     ): ?string
     {
-        $key = trim((string) $key);
-        $parts = preg_split('#\.#', $key, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($parts) === 0) return null;
-
-        $prefix = ! is_null($prefix) ? trim((string) $prefix) : null;
-        $prefix = $prefix && $prefix !== '' ? preg_split('#\.#', $prefix, -1, PREG_SPLIT_NO_EMPTY) : [];
-        if (count($prefix) > 0) array_unshift($parts, ...$prefix);
-
-        $suffix = ! is_null($suffix) ? trim((string) $suffix) : null;
-        $suffix = $suffix && $suffix !== '' ? preg_split('#\.#', $suffix, -1, PREG_SPLIT_NO_EMPTY) : [];
-        if (count($suffix) > 0) array_push($parts, ...$suffix);
-
-        return implode('.', $parts);
+        return Support\Data::key($key, $prefix, $suffix);
     }
 }
-//
-//if (! function_exists('data_key_new')) {
-//    function data_key_new(
-//        string|int $key,
-//        null|string|int $prefix = null,
-//        null|string|int $suffix = null,
-//    ): array
-//    {
-//        $key = trim((string) $key);
-//        $parts = preg_split('#\.#', $key, -1, PREG_SPLIT_NO_EMPTY);
-////        if (count($parts) === 0) return [];
-//
-//        $prefix = ! is_null($prefix) ? trim((string) $prefix) : null;
-//        $prefix = $prefix && $prefix !== '' ? preg_split('#\.#', $prefix, -1, PREG_SPLIT_NO_EMPTY) : [];
-////        if (count($prefix) > 0) array_unshift($parts, ...$prefix);
-//
-//        $suffix = ! is_null($suffix) ? trim((string) $suffix) : null;
-//        $suffix = $suffix && $suffix !== '' ? preg_split('#\.#', $suffix, -1, PREG_SPLIT_NO_EMPTY) : [];
-////        if (count($suffix) > 0) array_push($parts, ...$suffix);
-//
-//        return [
-//            'parts' => $parts,
-//            'prefix' => $prefix,
-//            'suffix' => $suffix,
-//        ];
-//    }
-//}
-//
-//if (! function_exists('fs_path_segments')) {
-//    function data_key_segments(string|null $key): array
-//    {
-//        return str_segments($key, DIRECTORY_SEPARATOR);
-//    }
-//}
+
+if (! function_exists('fs_path')) {
+    function fs_path(
+        string|array|null|\Stringable ...$paths
+    ): string
+    {
+        return Support\Fs::path(...$paths);
+    }
+}
+
 

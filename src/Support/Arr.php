@@ -6,9 +6,65 @@ namespace Aybarsm\Extra\Support;
 
 final class Arr
 {
+    public static function start(iterable $source, mixed ...$prefix): array
+    {
+        $source = array_values(self::wrap($source));
+        if (namespace\Data::blank($prefix)) {
+            return $source;
+        }
+
+        $result = $prefix;
+        $prefixLen = count($prefix);
+        $maxOverlap = 0;
+
+        for ($len = 1; $len <= min($prefixLen, count($source)); $len++) {
+            $prefixSlice = array_slice($prefix, $prefixLen - $len);
+            $sourceSlice = array_slice($source, 0, $len);
+
+            if ($prefixSlice === $sourceSlice) {
+                $maxOverlap = $len;
+            }
+        }
+
+        if ($maxOverlap < count($source)) {
+            $result = array_merge($result, array_slice($source, $maxOverlap));
+        }
+        return $result;
+    }
+
+    public static function end(iterable $source, mixed ...$suffix): array
+    {
+        $source = array_values(self::wrap($source));
+        if (namespace\Data::blank($suffix)) {
+            return $source;
+        }
+
+        $result = $source;
+        $sourceLen = count($source);
+        $suffixLen = count($suffix);
+
+        $maxOverlap = 0;
+
+        for ($len = 1; $len <= min($sourceLen, $suffixLen); $len++) {
+            $baseSlice   = array_slice($source, $sourceLen - $len);
+            $suffixSlice = array_slice($suffix, 0, $len);
+
+            if ($baseSlice === $suffixSlice) {
+                $maxOverlap = $len;
+            }
+        }
+
+        if ($maxOverlap < $suffixLen) {
+            $result = array_merge($result, array_slice($suffix, $maxOverlap));
+        }
+
+        return $result;
+    }
+
     public static function wrap(mixed $value): array
     {
         if (is_null($value)) return [];
+        if (is_iterable($value)) return iterator_to_array($value);
 
         return is_array($value) ? $value : [$value];
     }

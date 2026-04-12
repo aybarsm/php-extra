@@ -25,6 +25,19 @@ final class Str
         return function_exists('mb_str_split') ? mb_str_split($subject, $length, $encoding) : str_split($subject, $length);
     }
 
+    public static function isMatch(
+        string|\Stringable|iterable $pattern,
+        string|\Stringable $value,
+        ModeMatch|string $match = ModeMatch::ANY,
+    ): bool
+    {
+        $value = (string) $value;
+        return ModeMatch::make($match, false)->matchesBy(
+            namespace\Arr::wrap($pattern),
+            static fn ($item) => preg_match((string) $item, $value) === 1,
+        );
+    }
+
     public static function contains(
         string|\Stringable $subject,
         string|\Stringable|array $needle,
