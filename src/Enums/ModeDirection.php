@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Aybarsm\Extra\Enums;
 
-use Aybarsm\Extra\Support\Concerns\HasEnumHelpers;
+use Aybarsm\Extra\Concerns\HasEnumHelpers;
+use Aybarsm\Extra\Contracts\Concerns\HasEnumHelpersContract;
 
-enum ModeDirection
+enum ModeDirection implements HasEnumHelpersContract
 {
     use HasEnumHelpers;
 
