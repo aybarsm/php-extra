@@ -6,7 +6,7 @@ namespace Aybarsm\Extra\Dto;
 
 use Aybarsm\Extra\Concerns\IsJsonable;
 use Aybarsm\Extra\Dto\Contracts\EnumMetaContract;
-use Aybarsm\Extra\Exceptions\EnumDtoException;
+use Aybarsm\Extra\Exceptions\EnumMetaException;
 use UnitEnum;
 final class EnumMeta implements EnumMetaContract
 {
@@ -62,7 +62,7 @@ final class EnumMeta implements EnumMetaContract
 
         throw_if_(
             ! enum_exists($class),
-            EnumDtoException::class,
+            EnumMetaException::class,
             sprintf('Enum `%s` does not exist.', $class)
         );
 
