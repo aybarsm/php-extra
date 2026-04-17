@@ -203,6 +203,20 @@ if (! function_exists('is_falsy')) {
     }
 }
 
+if (! function_exists('is_enum')) {
+    function is_enum(mixed $value, bool $allowString = false): bool
+    {
+        return Support\Validate::enum($value, $allowString);
+    }
+}
+
+if (! function_exists('is_backed_enum')) {
+    function is_backed_enum(mixed $value, bool $allowString = false): bool
+    {
+        return Support\Validate::backedEnum($value, $allowString);
+    }
+}
+
 if (! function_exists('call_until')) {
     function call_until(\Closure $check, mixed $default, \Closure ...$calls): mixed
     {

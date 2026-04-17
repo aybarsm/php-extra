@@ -36,7 +36,19 @@ trait HasEnumHelpers
     {
         return self::getMeta()->isFlaggable();
     }
-     public static function findByName(
+    public static function getFlagsAll(): int
+    {
+        return self::getMeta()->getFlagsAll();
+    }
+
+    public static function flagsHas(
+        int|\BackedEnum ...$flags
+    ): bool
+    {
+        return count(self::allFlags(...$flags)) > 0;
+    }
+
+     public static function firstName(
          mixed $search,
          bool $strict = false,
          bool $includeAliases = true,
@@ -44,7 +56,7 @@ trait HasEnumHelpers
      {
          return self::getMeta()->findCaseByName($search, $strict, $includeAliases);
      }
-    public static function findByValue(
+    public static function firstValue(
         mixed $search,
         bool $strict = false,
         bool $includeAliases = true,
@@ -53,7 +65,7 @@ trait HasEnumHelpers
         return self::getMeta()->findCaseByValue($search, $strict, $includeAliases);
     }
 
-    public static function find(
+    public static function first(
         mixed $search,
         bool $strict = false,
         bool $includeAliases = true,
@@ -62,7 +74,7 @@ trait HasEnumHelpers
         return self::getMeta()->findCase($search, $strict, $includeAliases);
     }
 
-    public static function filterByFlags(
+    public static function allFlags(
         int|\BackedEnum ...$flags
     ): array
     {
@@ -78,7 +90,7 @@ trait HasEnumHelpers
      {
         if (is_a($value, self::class)) return $value;
 
-         $ret = self::find($value, $strict, $includeAliases);
+         $ret = self::first($value, $strict, $includeAliases);
 
         throw_if(
             $throws && $ret === null,
@@ -88,18 +100,40 @@ trait HasEnumHelpers
 
         return $ret;
      }
-
     public static function makeAll(
-        bool $strict = true,
+        mixed $values,
+        bool $strict = false,
+        bool $includeAliases = true,
         bool $throws = true,
-        bool $unique = false,
-        ...$values,
     ): array
     {
-        if (count($values) === 0) return [];
+        $values = array_wrap($values);
 
-        $ret = array_map(static fn ($value) => self::make($value, $strict, $throws), $values);
-        return $unique ? array_unique_by($ret, static fn (\UnitEnum $item) => $item->name) : $ret;
+        $ret = array_map(
+            static fn ($value) => self::make(
+                value: $value,
+                strict: $strict,
+                includeAliases: $includeAliases,
+                throws: $throws
+            ),
+            $values
+        );
+
+        if (self::isFlaggable()) {
+            $flagSearch = array_filter(
+                array_merge($ret, $values),
+                static fn ($item): bool => is_int($item) || is_enum($item)
+            );
+            try{
+                $ret = array_merge($ret, self::allFlags(...$flagSearch));
+            }catch (\Throwable $e){
+                if ($throws){
+                    throw $e;
+                }
+            }
+        }
+
+        return array_unique_by($ret, static fn (\UnitEnum $item) => $item->name);
     }
 
     public function toArray(): array

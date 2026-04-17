@@ -33,6 +33,16 @@ final class Validate
         return in_array(self::resolveBoolValue($value, $trim), ['no', 'off', '0', 'false', 'disabled', 'disable'], true);
     }
 
+    public static function enum(mixed $value, bool $allowString = false): bool
+    {
+        return is_subclass_of($value, \UnitEnum::class, $allowString);
+    }
+
+    public static function backedEnum(mixed $value, bool $allowString = false): bool
+    {
+        return is_subclass_of($value, \BackedEnum::class, $allowString);
+    }
+
     public static function sentinel(mixed $value): bool
     {
         return $value === namespace\Utils::sentinel();
