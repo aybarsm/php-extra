@@ -12,7 +12,7 @@ final class Str
 {
     public static function random(
         int $length = 16,
-        ModeStrCase|int $case = ModeStrCase::LOWER_UPPER_NUMBER,
+        ModeStrCase|int|string|array $cases = ModeStrCase::LOWER_UPPER_NUMBER,
         array $alphabetLower = [
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
             'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
@@ -33,6 +33,7 @@ final class Str
         ],
     ): string
     {
+        $cases = ModeStrCase::makeAll($cases);
 
     }
     public static function len(string|\Stringable $subject): int

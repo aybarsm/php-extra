@@ -1,13 +1,12 @@
 <?php
 
 namespace Aybarsm\Extra\Concerns;
-use Aybarsm\Extra\Contracts\Concerns\HasEnumHelpersContract;
 use Aybarsm\Extra\Dto\Contracts\EnumMetaContract;
 use Aybarsm\Extra\Dto\EnumMeta;
-use Aybarsm\Extra\Enums\ModeMatch;
 
 trait HasEnumHelpers
 {
+    use namespace\IsJsonable;
     public static function getMeta(): EnumMetaContract
     {
         return new EnumMeta(self::class);
@@ -48,19 +47,19 @@ trait HasEnumHelpers
         return count(self::allFlags(...$flags)) > 0;
     }
 
-     public static function firstName(
+     public static function firstByName(
          mixed $search,
          bool $strict = false,
          bool $includeAliases = true,
-     ): ?self
+     ): ?static
      {
          return self::getMeta()->findCaseByName($search, $strict, $includeAliases);
      }
-    public static function firstValue(
+    public static function firstByValue(
         mixed $search,
         bool $strict = false,
         bool $includeAliases = true,
-    ): ?self
+    ): ?static
     {
         return self::getMeta()->findCaseByValue($search, $strict, $includeAliases);
     }
@@ -69,7 +68,7 @@ trait HasEnumHelpers
         mixed $search,
         bool $strict = false,
         bool $includeAliases = true,
-    ): ?self
+    ): ?static
     {
         return self::getMeta()->findCase($search, $strict, $includeAliases);
     }
@@ -86,7 +85,7 @@ trait HasEnumHelpers
          bool $strict = false,
          bool $includeAliases = true,
          bool $throws = true,
-     ): ?self
+     ): ?static
      {
         if (is_a($value, self::class)) return $value;
 
@@ -107,7 +106,7 @@ trait HasEnumHelpers
         bool $throws = true,
     ): array
     {
-        $values = array_wrap($values);
+        $values = array_flatten(array_wrap($values));
 
         $ret = array_map(
             static fn ($value) => self::make(
@@ -134,6 +133,17 @@ trait HasEnumHelpers
         }
 
         return array_unique_by($ret, static fn (\UnitEnum $item) => $item->name);
+    }
+
+    public static function asFlags(
+        mixed ...$values,
+    ): int
+    {
+        return array_reduce(
+            self::makeAll($values),
+            static fn (int $carry, \BackedEnum $case): int => $carry | $case->value,
+            0,
+        );
     }
 
     public function toArray(): array
