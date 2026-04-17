@@ -49,4 +49,24 @@ enum ModeStrCase: int implements HasEnumHelpersContract
     final const int NUMBER_UPPER_SYMBOL = self::UPPER_NUMBER_SYMBOL;
     final const int SYMBOL_NUMBER_UPPER = self::UPPER_NUMBER_SYMBOL;
     final const int SYMBOL_UPPER_NUMBER = self::UPPER_NUMBER_SYMBOL;
+
+    public static function hasLower(int $flags): bool
+    {
+        return flags_has($flags, self::LOWER->value);
+    }
+
+    public static function hasUpper(int $flags): bool
+    {
+        return flags_has($flags, self::UPPER->value);
+    }
+
+    public static function hasNumber(int $flags): bool
+    {
+        return flags_has($flags, self::NUMBER->value);
+    }
+
+    public static function hasSymbol(int $flags): bool
+    {
+        return flags_has($flags, self::SYMBOL->value);
+    }
 }

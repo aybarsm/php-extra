@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Aybarsm\Extra\Dto;
 
+use Aybarsm\Extra\Concerns\IsJsonable;
 use Aybarsm\Extra\Dto\Contracts\EnumMetaContract;
 use Aybarsm\Extra\Exceptions\EnumDtoException;
 use UnitEnum;
 final class EnumMeta implements EnumMetaContract
 {
+    use IsJsonable;
     private static array $_metaData_ = [];
 
     public readonly string $class;
@@ -141,7 +143,7 @@ final class EnumMeta implements EnumMetaContract
         throw_if_(
             ! $this->isBacked(),
             \BadMethodCallException::class,
-            sprintf('Enum `%s` is not backed to have values.', $this->class)
+            sprintf('Enum `%s` is not backed to have values.', $this->getClass())
         );
 
         return $this->values;
@@ -172,7 +174,7 @@ final class EnumMeta implements EnumMetaContract
         throw_if_(
             ! $this->isFlaggable(),
             \BadMethodCallException::class,
-            sprintf('Enum `%s` is not flaggable to have flags.', $this->class)
+            sprintf('Enum `%s` is not flaggable to have flags.', $this->getClass())
         );
 
         return $this->flagsAll;
@@ -181,6 +183,11 @@ final class EnumMeta implements EnumMetaContract
     public function getAliasMap(): array
     {
         return $this->aliasMap;
+    }
+
+    public function hasAlias(string|\Stringable $alias): bool
+    {
+        return array_key_exists((string) $alias, $this->getAliasMap());
     }
 
     public function hasAliasMap(): bool
@@ -193,7 +200,7 @@ final class EnumMeta implements EnumMetaContract
         throw_if_(
             ! $this->isFlaggable(),
             \BadMethodCallException::class,
-            sprintf('Enum `%s` is not flaggable to have flag mapping.', $this->class)
+            sprintf('Enum `%s` is not flaggable to have flag mapping.', $this->getClass())
         );
 
         return $this->flagMap;
@@ -202,5 +209,95 @@ final class EnumMeta implements EnumMetaContract
     public function hasFlagMap(): bool
     {
         return $this->isFlaggable() && count($this->getFlagMap()) > 0;
+    }
+
+    public function getCasesAssoc(bool $includeAliases = false): array
+    {
+        $ret = array_combine($this->getNames(), $this->getCases());
+
+        if (!$includeAliases || ! $this->hasAliasMap()) return $ret;
+
+        foreach($this->getAliasMap() as $alias => $name){
+            $ret[$alias] = $ret[$name];
+        }
+
+        return $ret;
+    }
+
+    public function findCaseByName(
+        mixed $search,
+        bool $strict = false,
+        bool $includeAliases = true,
+    ): ?UnitEnum
+    {
+        return array_find(
+            $this->getCasesAssoc($includeAliases),
+            static fn (\UnitEnum $case, string $name) => value_compare($search, $name, $strict)
+        );
+    }
+
+    public function findCaseByValue(
+        mixed $search,
+        bool $strict = false,
+        bool $includeAliases = true,
+    ): ?UnitEnum
+    {
+        throw_if_(
+            ! $this->isBacked(),
+            \BadMethodCallException::class,
+            sprintf('Enum `%s` is not backed to have values.', $this->getClass())
+        );
+
+        return array_find(
+            $this->getCasesAssoc($includeAliases),
+            static fn (\BackedEnum $case) => value_compare($search, $case->value, $strict)
+        );
+    }
+    public function findCase(
+        mixed $search,
+        bool $strict = false,
+        bool $includeAliases = true,
+    ): ?UnitEnum
+    {
+        $ret = $this->findCaseByName($search, $strict, $includeAliases);
+
+        if ($ret) return $ret;
+        if (!$this->isBacked()) return null;
+
+        return $this->findCaseByValue($search, $strict, $includeAliases);
+    }
+    public function findCasesByFlags(
+        int|\BackedEnum ...$flags
+    ): array
+    {
+        throw_if_(
+            ! $this->isFlaggable(),
+            \BadMethodCallException::class,
+            sprintf('Enum `%s` is not flaggable.', $this->getClass())
+        );
+
+        $flagsCalculated = 0;
+        foreach ($flags as $flag) {
+            if (is_int($flag)) {
+                $flagValue = $flag;
+            }else {
+                $meta = new self($flag);
+                throw_if_(
+                    $meta->getClass() !== $this->getClass(),
+                    \BadMethodCallException::class,
+                    sprintf('Enum `%s` is not a part of `%s`', $meta->getClass(), $this->getClass())
+                );
+                $flagValue = $flag->value;
+            }
+
+            if (!flags_has($flagsCalculated, $flagValue)) {
+                $flagsCalculated = $flagsCalculated | $flagValue;
+            }
+        }
+
+        return array_filter(
+            $this->getCases(),
+            static fn (\BackedEnum $case) => flags_has($flagsCalculated, $case->value)
+        );
     }
 }

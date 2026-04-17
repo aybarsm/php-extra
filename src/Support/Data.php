@@ -6,11 +6,25 @@ namespace Aybarsm\Extra\Support;
 
 final class Data
 {
-    public static function compare(mixed $source, mixed $compare, bool $strict = true): bool
+    public static function compare(
+        mixed $source,
+        mixed $compare,
+        bool $strict = true,
+        ?\Closure $formatUsing = null,
+    ): bool
     {
         if ($strict) return $source === $compare;
+        if ($source == $compare) return true;
 
-        return strtolower((string) $source) === strtolower((string) $compare);
+        if (is_null($formatUsing)) {
+            $formatUsing = static fn (mixed $val) => strtoupper(strval($val));
+        }
+
+        try {
+            return $formatUsing($source) === $formatUsing($compare);
+        }catch (\Throwable $e){
+            return false;
+        }
     }
 
     public static function blank(mixed $value): bool
