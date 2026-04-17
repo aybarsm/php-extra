@@ -5,36 +5,53 @@ declare(strict_types=1);
 use Aybarsm\Extra\Enums\ModeMatch;
 use Aybarsm\Extra\Support;
 
-if (! function_exists('blank')) {
-    function blank(mixed $value): bool
+if (! function_exists('sentinel')) {
+    function sentinel(): string
+    {
+        return Support\Utils::sentinel();
+    }
+}
+
+if (! function_exists('is_sentinel')) {
+    function is_sentinel(mixed $value): bool
+    {
+        return Support\Validate::sentinel($value);
+    }
+}
+
+if (! function_exists('is_blank')) {
+    function is_blank(mixed $value): bool
     {
         return Support\Data::blank($value);
     }
 }
 
-if (! function_exists('filled')) {
-    function filled(mixed $value): bool
+if (! function_exists('is_filled')) {
+    function is_filled(mixed $value): bool
     {
         return Support\Data::filled($value);
     }
 }
 
-if (! function_exists('value')) {
-    function value($value, ...$args)
+if (! function_exists('to_value')) {
+    function to_value($value, ...$args)
     {
-        return $value instanceof Closure ? $value(...$args) : $value;
+        if (is_callable($value)) {
+            return call_user_func_array($value, $args);
+        }
+        return $value;
     }
 }
 
-if (! function_exists('with')) {
-    function tap($value, \Closure $callback)
+if (! function_exists('with_')) {
+    function with_($value, \Closure $callback)
     {
         return $callback(value($value));
     }
 }
 
-if (! function_exists('tap')) {
-    function tap($value, \Closure $callback)
+if (! function_exists('tap_')) {
+    function tap_($value, \Closure $callback)
     {
         $value = value($value);
 
@@ -44,22 +61,29 @@ if (! function_exists('tap')) {
     }
 }
 
-if (! function_exists('throw_if')) {
-    function throw_if($condition, $exception = 'RuntimeException', ...$parameters)
+if (! function_exists('throw_if_')) {
+    function throw_if_(
+        mixed $condition,
+        mixed $exception = 'RuntimeException',
+        ...$parameters
+    ): bool
     {
-        if ($condition) {
-            if ($exception instanceof Closure) {
-                $exception = $exception(...$parameters);
-            }
+        $condition = value($condition);
+        if (!$condition) return false;
 
-            if (is_string($exception) && class_exists($exception)) {
-                $exception = new $exception(...$parameters);
-            }
-
-            throw is_string($exception) ? new RuntimeException($exception) : $exception;
+        if (is_callable($exception)) {
+            $exceptionParameters = $parameters;
+            $exceptionParameters[] = $condition;
+            $exception = value($exception, ...$exceptionParameters);
         }
 
-        return $condition;
+        if ((is_object($exception) || (is_string($exception) && class_exists($exception))) && is_subclass_of($exception, \Exception::class, false)) {
+            $exception = is_object($exception) ? $exception : new $exception(...$parameters);
+        }else {
+            $exception = new \RuntimeException($exception, ...$parameters);
+        }
+
+        throw $exception;
     }
 }
 
@@ -95,6 +119,19 @@ if (! function_exists('array_flatten')) {
     function array_flatten(array $array, int|float $depth = INF): array
     {
         return Support\Arr::flatten($array, $depth);
+    }
+}
+
+if (! function_exists('array_join')) {
+    function array_join(
+        array $array,
+        string $glue,
+        string $finalGlue = '',
+        string $prefix = '',
+        string $suffix = '',
+    ): string
+    {
+        return Support\Arr::join($array, $glue, $finalGlue, $prefix, $suffix);
     }
 }
 
@@ -152,4 +189,23 @@ if (! function_exists('fs_path')) {
     }
 }
 
+if (! function_exists('is_truthy')) {
+    function is_truthy(mixed $value, bool $trim = false): bool
+    {
+        return Support\Validate::truthy($value, $trim);
+    }
+}
 
+if (! function_exists('is_falsy')) {
+    function is_falsy(mixed $value, bool $trim = false): bool
+    {
+        return Support\Validate::falsy($value, $trim);
+    }
+}
+
+if (! function_exists('call_until')) {
+    function call_until(\Closure $check, mixed $default, \Closure ...$calls): mixed
+    {
+        return Support\Utils::callUntil($check, $default, ...$calls);
+    }
+}

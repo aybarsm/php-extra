@@ -6,9 +6,35 @@ namespace Aybarsm\Extra\Support;
 
 use Aybarsm\Extra\Enums\ModeDirection;
 use Aybarsm\Extra\Enums\ModeMatch;
+use Aybarsm\Extra\Enums\ModeStrCase;
 
 final class Str
 {
+    public static function random(
+        int $length = 16,
+        ModeStrCase|int $case = ModeStrCase::LOWER_UPPER_NUMBER,
+        array $alphabetLower = [
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+            'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+            'w', 'x', 'y', 'z'
+        ],
+        array $alphabetUpper = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G',
+            'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+            'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        ],
+        array $alphabetNumber = [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        ],
+        array $alphabetSymbol = [
+            '~', '!', '#', '$', '%', '^', '&', '*', '(', ')', '-',
+            '_', '.', ',', '<', '>', '?', '/', '\\', '{', '}', '[',
+            ']', '|', ':', ';',
+        ],
+    ): string
+    {
+
+    }
     public static function len(string|\Stringable $subject): int
     {
         $subject = (string) $subject;
@@ -54,6 +80,7 @@ final class Str
     public static function start(string|\Stringable $value, string|\Stringable $prefix): string
     {
         [$value, $prefix] = [(string) $value, (string) $prefix];
+        if ($prefix === '') return $value;
         $quoted = preg_quote($prefix, '/');
 
         return $prefix.preg_replace('/^(?:'.$quoted.')+/u', '', $value);
@@ -62,6 +89,7 @@ final class Str
     public static function finish(string|\Stringable $value, string|\Stringable $cap): string
     {
         [$value, $cap] = [(string) $value, (string) $cap];
+        if ($cap === '') return $value;
         $quoted = preg_quote($cap, '/');
 
         return preg_replace('/(?:'.$quoted.')+$/u', '', $value).$cap;

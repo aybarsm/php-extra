@@ -2,24 +2,54 @@
 
 namespace Aybarsm\Extra\Concerns;
 use Aybarsm\Extra\Contracts\Concerns\HasEnumHelpersContract;
+use Aybarsm\Extra\Enums\ModeMatch;
+use Aybarsm\Extra\Enums\ModeStrCase;
+
 trait HasEnumHelpers
 {
-    public static function getAllCases(): array
+    public static function getDtoCases(): array
     {
-        $cases = self::cases();
-
-        $aliases = array_filter(
-            array: new \ReflectionClass(self::class)->getConstants(\ReflectionClassConstant::IS_PUBLIC),
-            callback: static fn ($item, $name) => is_a($item, self::class, true) && !isset($cases[$name]),
-            mode: ARRAY_FILTER_USE_BOTH
+        return array_combine(($names = self::getNames()), (self::isBacked() ? self::getValues() : $names));
+    }
+    public static function getCases(): array
+    {
+        return array_combine(($names = self::getNames()), (self::isBacked() ? self::getValues() : $names));
+    }
+    public static function getNames(): array
+    {
+        return array_column(self::cases(), 'name');
+    }
+    public static function getValues(): array
+    {
+        throw_if(
+            !self::isBacked(),
+            \BadMethodCallException::class,
+            'Value extraction requires a BackedEnum'
         );
 
-        return array_merge($cases, $aliases);
+        return array_column(self::cases(), 'value');
     }
-    public static function isBackedEnum(): bool
+
+    public static function getAllCases(): array
     {
-        return is_subclass_of(self::class, \BackedEnum::class);
+        $cases = self::getCases();
+        $flagsAll = self::isFlaggable() ? array_sum(array_values($cases)) : null;
+        $constants = new \ReflectionClass(self::class)
+            ->getConstants(\ReflectionClassConstant::IS_PUBLIC);
+
+        foreach ($constants as $name => $item) {
+            if (isset($cases[$name])) continue;
+
+            if (is_a($item, self::class, true)){
+                $cases[$name] = $item::isBacked() ? $item->value : $item->name;
+            }elseif ($flagsAll && is_int($item) && $item > 0 && flags_has($flagsAll, $item)) {
+                $cases[$name] = $item;
+            }
+        }
+
+        return $cases;
     }
+
     public static function getAllNames(): array
     {
         return array_keys(self::getAllCases());
@@ -28,11 +58,36 @@ trait HasEnumHelpers
     public static function getAllValues(): array
     {
         throw_if(
-            !self::isBackedEnum(),
+            !self::isBacked(),
             \BadMethodCallException::class,
             'Value extraction requires a BackedEnum'
         );
-        return array_column(self::cases(), 'value');
+
+        return array_unique(array_values(self::getAllCases()));
+    }
+    public static function isBacked(): bool
+    {
+        return is_subclass_of(self::class, \BackedEnum::class);
+    }
+
+    public static function isBackedString(): bool
+    {
+        return is_subclass_of(self::class, \StringBackedEnum::class);
+    }
+
+    public static function isBackedInt(): bool
+    {
+        return is_subclass_of(self::class, \IntBackedEnum::class);
+    }
+
+    public static function isFlaggable(): bool
+    {
+        if (!self::isBacked()) return false;
+
+        return ModeMatch::ALL->matchesBy(
+            self::getValues(),
+            static fn (mixed $val) => is_int($val) && $val > 0 && ($val & ($val - 1)) === 0
+        );
     }
 
     public static function toArray(): array
@@ -44,7 +99,19 @@ trait HasEnumHelpers
     {
         return array_find(
             self::getAllCases(),
-            static fn (HasEnumHelpersContract $item, $name) => value_compare($name, $search, $strict) || ($item::isBackedEnum() && value_compare($item->value, $search, $strict)),
+            static function ($value, $name) use ($search, $strict) {
+                $isMatch = value_compare($name, $search, $strict) || value_compare($value, $search, $strict);
+                if (!$isMatch) return false;
+                try{
+                    return self::{$name};
+                }catch (\Throwable $e){
+                    try {
+                        return self::{$value};
+                    }catch (\Throwable $e){
+                        return false;
+                    }
+                }
+            },
         );
     }
      public static function findByName(mixed $search, bool $strict = true): ?self
@@ -57,7 +124,7 @@ trait HasEnumHelpers
      public static function findByValue(mixed $value, bool $strict = true): ?self
      {
          throw_if(
-             !self::isBackedEnum(),
+             !self::isBacked(),
              \BadMethodCallException::class,
              'Find by value requires a BackedEnum'
          );
@@ -83,7 +150,12 @@ trait HasEnumHelpers
         return $ret;
      }
 
-    public static function makeAll(bool $strict = true, bool $throws = true, bool $unique = false, ...$values): array
+    public static function makeAll(
+        bool $strict = true,
+        bool $throws = true,
+        bool $unique = false,
+        ...$values,
+    ): array
     {
         if (count($values) === 0) return [];
 

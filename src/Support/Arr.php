@@ -131,4 +131,27 @@ final class Arr
     {
         return array_filter($array, static fn ($item) => namespace\Data::filled($item));
     }
+
+    public static function join(
+        array $array,
+        string $glue,
+        string $finalGlue = '',
+        string $prefix = '',
+        string $suffix = '',
+    ): string
+    {
+        if (count($array) === 0) return '';
+
+        if ($finalGlue === '') {
+            $ret = implode($glue, $array);
+        }else {
+            if (count($array) === 1) {
+                $ret = array_last($array);
+            }else {
+                $finalItem = array_pop($array);
+                $ret = implode($glue, $array).$finalGlue.$finalItem;
+            }
+        }
+        return namespace\Str::wrap($ret, $prefix, $suffix);
+    }
 }
