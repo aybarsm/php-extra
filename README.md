@@ -1,6 +1,3 @@
-## What It Does
-Laravel Convo is a robust service provider designed for both Laravel and Laravel Zero. Its primary goal is to streamline the process of sending and receiving HTTP requests dynamically. By leveraging the power of designated handlers through invokable classes, users can easily configure the package to handle various HTTP operations. Whether you aim to receive callbacks or initiate new requests, Laravel Convo is your go-to solution. Simply identify the handlers, set your desired HTTP options, and Laravel Convo will manage the conversation for you.
-
 <div style="text-align: center;">
 
 # ⚠️ WARNING: UNDER HEAVY DEVELOPMENT ⚠️
