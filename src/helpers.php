@@ -64,26 +64,27 @@ if (! function_exists('tap_')) {
 if (! function_exists('throw_if_')) {
     function throw_if_(
         mixed $condition,
-        mixed $exception = 'RuntimeException',
         ...$parameters
     ): bool
     {
         $condition = value($condition);
-        if (!$condition) return false;
+        if (!$condition || blank($parameters)) return false;
 
-        if (is_callable($exception)) {
-            $exceptionParameters = $parameters;
-            $exceptionParameters[] = $condition;
-            $exception = value($exception, ...$exceptionParameters);
+        $exception = null;
+
+        if (is_object($parameters[0]) && is_subclass_of($parameters[0], \Throwable::class)) {
+            $exception = array_shift($parameters);
+        }elseif (is_string($parameters[0]) && class_exists($parameters[0]) && is_subclass_of($parameters[0], \Throwable::class)) {
+            $exception = array_shift($parameters);
+            $exception = new $exception(...$parameters);
+        }elseif (is_callable($parameters[0])) {
+            $exception = array_shift($parameters);
+            $exception = value($exception, ...$parameters);
         }
 
-        if ((is_object($exception) || (is_string($exception) && class_exists($exception))) && is_subclass_of($exception, \Exception::class, false)) {
-            $exception = is_object($exception) ? $exception : new $exception(...$parameters);
-        }else {
-            $exception = new \RuntimeException($exception, ...$parameters);
-        }
+        if ($exception instanceof \Throwable) throw $exception;
 
-        throw $exception;
+        throw new \RuntimeException(...$parameters);
     }
 }
 
@@ -185,7 +186,7 @@ if (! function_exists('fs_path')) {
         string|array|null|\Stringable ...$paths
     ): string
     {
-        return Support\Fs::path(...$paths);
+        return Support\Filesystem::path(...$paths);
     }
 }
 

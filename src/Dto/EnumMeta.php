@@ -99,7 +99,7 @@ final class EnumMeta implements EnumMetaContract
             'isBackedString' => $isBackedString,
             'isBackedInt' => $isBackedInt,
             'isFlaggable' => $isFlaggable,
-            'flagsAll' => $flagsAll,
+            'flagsAll' => ($flagsAll === false ? null : $flagsAll),
         ]);
 
         $meta['aliasMap'] = [];

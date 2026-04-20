@@ -7,26 +7,27 @@ namespace Aybarsm\Extra\Support;
 use Aybarsm\Extra\Enums\ModeDirection;
 use Aybarsm\Extra\Enums\ModeMatch;
 use Aybarsm\Extra\Enums\ModeStrCase;
+use chillerlan\QRCode\Common\Mode;
 
 final class Str
 {
     public static function random(
         int $length = 16,
         ModeStrCase|int|string|array $cases = ModeStrCase::LOWER_UPPER_NUMBER,
-        array $alphabetLower = [
+        array $lower = [
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
             'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
             'w', 'x', 'y', 'z'
         ],
-        array $alphabetUpper = [
+        array $upper = [
             'A', 'B', 'C', 'D', 'E', 'F', 'G',
             'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
             'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
         ],
-        array $alphabetNumber = [
+        array $number = [
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         ],
-        array $alphabetSymbol = [
+        array $symbol = [
             '~', '!', '#', '$', '%', '^', '&', '*', '(', ')', '-',
             '_', '.', ',', '<', '>', '?', '/', '\\', '{', '}', '[',
             ']', '|', ':', ';',
@@ -34,6 +35,29 @@ final class Str
     ): string
     {
         $cases = ModeStrCase::makeAll($cases);
+        throw_if_(
+            count($cases) === 0,
+            \InvalidArgumentException::class,
+            'No proper case flags provided.'
+        );
+
+        $flags = ModeStrCase::asFlags($cases);
+        $alphabets = [];
+
+        if (ModeStrCase::hasLower($flags)) $alphabets['lower'] = $flags;
+        if (ModeStrCase::hasUpper($flags)) $alphabets['upper'] = $flags;
+        if (ModeStrCase::hasNumber($flags)) $alphabets['number'] = $flags;
+        if (ModeStrCase::hasSymbol($flags)) $alphabets['symbol'] = $flags;
+
+        throw_if(
+            $length < count($alphabets),
+            \InvalidArgumentException::class,
+            sprintf(
+                'Length cannot be less than `%d` characters for given cases, `%d` provided.',
+                count($alphabets),
+                $length
+            )
+        );
 
     }
     public static function len(string|\Stringable $subject): int

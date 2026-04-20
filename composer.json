@@ -3,7 +3,7 @@
     "description": "An opinionated PHP extra utilities library.",
     "version": "dev-main",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "keywords": ["aybarsm", "php", "utilities", "utils"],
     "homepage": "https://github.com/aybarsm/php-extra",
     "authors": [
